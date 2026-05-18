@@ -1,52 +1,50 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-console.log("SERVER FILE LOAD HO GAYI ✅");
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB Atlas Connected ✅'))
+  .catch((err) => console.log('MongoDB Error:', err));
 
-// MongoDB URL - Apna password wala URL daal
-const MONGO_URL = 'mongodb+srv://clinicAdmin:j34LAP2YdZwXaL5M@cluster0.q0tgxvm.mongodb.net/clinic_db?retryWrites=true&w=majority&appName=Cluster0';
+// Test Route - Root
+app.get("/", (req, res) => {
+  res.json({ 
+    message: "Clinic Backend API is Running 🚀",
+    status: "Live",
+    version: "1.0.0"
+  });
+});
 
-mongoose.connect(MONGO_URL)
-  .then(() => console.log('MongoDB Atlas Connected ✅ Permanent DB'))
-  .catch(err => console.log('DB Error:', err.message));
-
-// Schema
-const appointmentSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  phone: { type: String, required: true },
-  email: String,
-  date: { type: String, required: true },
-  time: { type: String, required: true },
-  service: String // service kiya, message nahi
-}, { timestamps: true });
-
-const Appointment = mongoose.model('Appointment', appointmentSchema);
-
-// API: Naya appointment book karna
-app.post('/api/appointment', async (req, res) => {
-  console.log("ROUTE HIT HUA 🔥🔥🔥"); 
+// Get All Appointments
+app.get("/api/appointments", async (req, res) => {
   try {
-    console.log('Data aaya:', req.body);
-    
-    const newAppointment = new Appointment(req.body);
-    await newAppointment.save();
-    
-    console.log('DB me save ho gaya ✅');
-    res.json({ success: true, message: 'Appointment booked successfully!' });
-    
-  } catch (err) {
-    console.log('Error aaya:', err.message);
-    res.status(500).json({ success: false, message: err.message });
+    res.json([]); // Abhi empty array bhej rahe
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create Appointment 
+app.post("/api/appointments", async (req, res) => {
+  try {
+    const newAppointment = req.body;
+    console.log("New appointment:", newAppointment);
+    res.status(201).json({ message: "Appointment created", data: newAppointment });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
 // Server Start
-const PORT = 5001;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT} 🔥`);
 });
